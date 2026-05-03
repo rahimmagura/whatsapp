@@ -1,5 +1,5 @@
 {
-  "name": "simple-node-app",
+  "name": "store-check-app",
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
