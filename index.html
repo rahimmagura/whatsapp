@@ -28,22 +28,46 @@ input{
   width:100%;
   padding:10px;
   margin:5px 0;
+  box-sizing:border-box;
 }
 
 button{
   width:100%;
   padding:10px;
   margin-top:5px;
+  border:none;
+  border-radius:6px;
+  color:white;
+  font-size:15px;
+  cursor:pointer;
 }
 
-.insert{background:green;color:white;}
-.check{background:blue;color:white;}
-.delete{background:red;color:white;}
-.download{background:black;color:white;}
+.insert{background:green;}
+.check{background:blue;}
+.delete{background:red;}
+.download{background:black;}
 
 #result{
   margin-top:10px;
   font-weight:bold;
+  text-align:center;
+}
+
+/* 🔄 Spinner */
+.spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  animation: spin 1s linear infinite;
+  display: none;
+  margin: 10px auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 </style>
 </head>
@@ -62,22 +86,36 @@ button{
 <button class="delete" onclick="deleteData()">Delete</button>
 <button class="download" onclick="downloadPDF()">Download PDF</button>
 
+<div class="spinner" id="spinner"></div>
+
 <div id="result"></div>
 
 </div>
 
 <script>
 
-function getData(){
-  return {
-    mobile: document.getElementById("mobile").value,
-    email: document.getElementById("email").value
-  };
+function showSpinner(){
+  document.getElementById("spinner").style.display = "block";
+}
+
+function hideSpinner(){
+  document.getElementById("spinner").style.display = "none";
+}
+
+function resetInputs(){
+  document.getElementById("mobile").value = "";
+  document.getElementById("email").value = "";
 }
 
 // INSERT
 async function insertData(){
-  let data = getData();
+
+  showSpinner();
+
+  let data = {
+    mobile: document.getElementById("mobile").value,
+    email: document.getElementById("email").value
+  };
 
   let res = await fetch('/insert',{
     method:'POST',
@@ -86,11 +124,18 @@ async function insertData(){
   });
 
   let out = await res.json();
+
+  hideSpinner();
   document.getElementById("result").innerText = out.message;
+
+  resetInputs();
 }
 
 // CHECK
 async function checkData(){
+
+  showSpinner();
+
   let value = document.getElementById("mobile").value || document.getElementById("email").value;
 
   let res = await fetch('/check',{
@@ -101,16 +146,23 @@ async function checkData(){
 
   let out = await res.json();
 
+  hideSpinner();
+
   if(out.found){
     document.getElementById("result").innerText =
     `Found ✅ Mobile: ${out.data.mobile} | Email: ${out.data.email}`;
   } else {
     document.getElementById("result").innerText = "Not Found ❌";
   }
+
+  resetInputs();
 }
 
 // DELETE
 async function deleteData(){
+
+  showSpinner();
+
   let value = document.getElementById("mobile").value || document.getElementById("email").value;
 
   let res = await fetch('/delete',{
@@ -121,12 +173,16 @@ async function deleteData(){
 
   let out = await res.json();
 
+  hideSpinner();
+
   if(out.deleted){
     document.getElementById("result").innerText =
     `Deleted 🗑 Mobile: ${out.deleted.mobile} | Email: ${out.deleted.email}`;
   } else {
     document.getElementById("result").innerText = out.message;
   }
+
+  resetInputs();
 }
 
 // DOWNLOAD
