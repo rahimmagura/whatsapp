@@ -7,7 +7,8 @@
 
 <style>
 body{
-  font-family: Arial;
+  margin:0;
+  font-family:Arial;
   background:#f4f4f4;
   display:flex;
   justify-content:center;
@@ -46,6 +47,7 @@ button{
 .check{background:blue;}
 .delete{background:red;}
 .download{background:black;}
+.restore{background:purple;}
 
 #result{
   margin-top:10px;
@@ -53,21 +55,21 @@ button{
   text-align:center;
 }
 
-/* 🔄 Spinner */
-.spinner {
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #3498db;
-  border-radius: 50%;
-  width: 18px;
-  height: 18px;
-  animation: spin 1s linear infinite;
-  display: none;
-  margin: 10px auto;
+/* spinner */
+.spinner{
+  border:4px solid #f3f3f3;
+  border-top:4px solid #3498db;
+  border-radius:50%;
+  width:18px;
+  height:18px;
+  animation:spin 1s linear infinite;
+  display:none;
+  margin:10px auto;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+@keyframes spin{
+  0%{transform:rotate(0deg);}
+  100%{transform:rotate(360deg);}
 }
 </style>
 </head>
@@ -84,7 +86,12 @@ button{
 <button class="insert" onclick="insertData()">Insert</button>
 <button class="check" onclick="checkData()">Check</button>
 <button class="delete" onclick="deleteData()">Delete</button>
-<button class="download" onclick="downloadPDF()">Download PDF</button>
+<button class="download" onclick="downloadAll()">Download (PDF + JSON)</button>
+
+<br><br>
+
+<input type="file" id="jsonFile">
+<button class="restore" onclick="restoreData()">Restore JSON</button>
 
 <div class="spinner" id="spinner"></div>
 
@@ -94,27 +101,20 @@ button{
 
 <script>
 
-function showSpinner(){
-  document.getElementById("spinner").style.display = "block";
-}
-
-function hideSpinner(){
-  document.getElementById("spinner").style.display = "none";
-}
-
-function resetInputs(){
-  document.getElementById("mobile").value = "";
-  document.getElementById("email").value = "";
+function show(){document.getElementById("spinner").style.display="block";}
+function hide(){document.getElementById("spinner").style.display="none";}
+function reset(){
+  document.getElementById("mobile").value="";
+  document.getElementById("email").value="";
 }
 
 // INSERT
 async function insertData(){
-
-  showSpinner();
+  show();
 
   let data = {
-    mobile: document.getElementById("mobile").value,
-    email: document.getElementById("email").value
+    mobile: mobile.value,
+    email: email.value
   };
 
   let res = await fetch('/insert',{
@@ -124,19 +124,16 @@ async function insertData(){
   });
 
   let out = await res.json();
-
-  hideSpinner();
-  document.getElementById("result").innerText = out.message;
-
-  resetInputs();
+  hide();
+  result.innerText = out.message;
+  reset();
 }
 
 // CHECK
 async function checkData(){
+  show();
 
-  showSpinner();
-
-  let value = document.getElementById("mobile").value || document.getElementById("email").value;
+  let value = mobile.value || email.value;
 
   let res = await fetch('/check',{
     method:'POST',
@@ -146,24 +143,20 @@ async function checkData(){
 
   let out = await res.json();
 
-  hideSpinner();
+  hide();
 
-  if(out.found){
-    document.getElementById("result").innerText =
-    `Found ✅ Mobile: ${out.data.mobile} | Email: ${out.data.email}`;
-  } else {
-    document.getElementById("result").innerText = "Not Found ❌";
-  }
+  result.innerText = out.found
+    ? `Found ✅ Mobile: ${out.data.mobile} | Email: ${out.data.email}`
+    : "Not Found ❌";
 
-  resetInputs();
+  reset();
 }
 
 // DELETE
 async function deleteData(){
+  show();
 
-  showSpinner();
-
-  let value = document.getElementById("mobile").value || document.getElementById("email").value;
+  let value = mobile.value || email.value;
 
   let res = await fetch('/delete',{
     method:'POST',
@@ -173,21 +166,40 @@ async function deleteData(){
 
   let out = await res.json();
 
-  hideSpinner();
+  hide();
 
-  if(out.deleted){
-    document.getElementById("result").innerText =
-    `Deleted 🗑 Mobile: ${out.deleted.mobile} | Email: ${out.deleted.email}`;
-  } else {
-    document.getElementById("result").innerText = out.message;
-  }
+  result.innerText = out.deleted
+    ? `Deleted 🗑 ${out.deleted.mobile} | ${out.deleted.email}`
+    : out.message;
 
-  resetInputs();
+  reset();
 }
 
-// DOWNLOAD
-function downloadPDF(){
-  window.location.href = "/download";
+// DOWNLOAD BOTH
+function downloadAll(){
+  window.open('/download-json');
+  setTimeout(()=>window.open('/download-pdf'),500);
+}
+
+// RESTORE
+async function restoreData(){
+
+  show();
+
+  let file = jsonFile.files[0];
+
+  let form = new FormData();
+  form.append("file", file);
+
+  let res = await fetch('/restore',{
+    method:'POST',
+    body: form
+  });
+
+  let out = await res.json();
+
+  hide();
+  result.innerText = out.message;
 }
 
 </script>
