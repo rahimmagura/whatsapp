@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Store & Check</title>
+</head>
+<body style="text-align:center; margin-top:100px; font-family:sans-serif;">
+
+  <h2>Store & Check</h2>
+
+  <input type="text" id="inputValue" placeholder="Enter value">
+  <br><br>
+
+  <button onclick="insertData()">Insert</button>
+  <button onclick="checkData()">Check</button>
+
+  <h3 id="result"></h3>
+
+  <script>
+    async function insertData() {
+      let value = document.getElementById("inputValue").value;
+
+      let res = await fetch('/insert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ value })
+      });
+
+      let data = await res.json();
+      document.getElementById("result").innerText = data.message;
+    }
+
+    async function checkData() {
+      let value = document.getElementById("inputValue").value;
+
+      let res = await fetch('/check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ value })
+      });
+
+      let data = await res.json();
+
+      document.getElementById("result").innerText =
+        data.found ? "Found ✅" : "Not Found ❌";
+    }
+  </script>
+
+</body>
+</html>
