@@ -1,49 +1,109 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Store & Check</title>
-</head>
-<body style="text-align:center; margin-top:100px; font-family:sans-serif;">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <h2>Store & Check</h2>
+<title>Store & Check App</title>
+
+<style>
+  body {
+    margin: 0;
+    font-family: Arial;
+    background: #f4f4f4;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+
+  .box {
+    width: 95%;
+    max-width: 400px;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    text-align: center;
+  }
+
+  input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-sizing: border-box;
+  }
+
+  button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 8px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+
+  .insert {
+    background: green;
+    color: white;
+  }
+
+  .check {
+    background: blue;
+    color: white;
+  }
+
+  #result {
+    margin-top: 15px;
+    font-weight: bold;
+  }
+</style>
+</head>
+
+<body>
+
+<div class="box">
+  <h2>Store & Check App</h2>
 
   <input type="text" id="inputValue" placeholder="Enter value">
-  <br><br>
 
-  <button onclick="insertData()">Insert</button>
-  <button onclick="checkData()">Check</button>
+  <button class="insert" onclick="insertData()">Insert</button>
+  <button class="check" onclick="checkData()">Check</button>
 
-  <h3 id="result"></h3>
+  <div id="result"></div>
+</div>
 
-  <script>
-    async function insertData() {
-      let value = document.getElementById("inputValue").value;
+<script>
+async function insertData() {
+    let value = document.getElementById("inputValue").value;
 
-      let res = await fetch('/insert', {
+    let res = await fetch('/insert', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ value })
-      });
+    });
 
-      let data = await res.json();
-      document.getElementById("result").innerText = data.message;
-    }
+    let data = await res.json();
+    document.getElementById("result").innerText = data.message;
+}
 
-    async function checkData() {
-      let value = document.getElementById("inputValue").value;
+async function checkData() {
+    let value = document.getElementById("inputValue").value;
 
-      let res = await fetch('/check', {
+    let res = await fetch('/check', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ value })
-      });
+    });
 
-      let data = await res.json();
+    let data = await res.json();
 
-      document.getElementById("result").innerText =
+    document.getElementById("result").innerText =
         data.found ? "Found ✅" : "Not Found ❌";
-    }
-  </script>
+}
+</script>
 
 </body>
 </html>
