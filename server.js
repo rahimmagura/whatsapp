@@ -1,12 +1,17 @@
 const express = require('express');
-const app = express();
+const path = require('path');
 
+const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(express.json());
-app.use(express.static('public'));
 
-let dataStore = []; // temporary storage
+// 👉 Serve index.html manually (no public folder)
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+let dataStore = [];
 
 // Insert API
 app.post('/insert', (req, res) => {
@@ -24,11 +29,9 @@ app.post('/insert', (req, res) => {
 app.post('/check', (req, res) => {
     const value = req.body.value;
 
-    if (dataStore.includes(value)) {
-        res.json({ found: true });
-    } else {
-        res.json({ found: false });
-    }
+    res.json({
+        found: dataStore.includes(value)
+    });
 });
 
 app.listen(port, () => {
