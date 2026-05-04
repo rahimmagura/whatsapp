@@ -1,5 +1,5 @@
 {
-  "name": "store-check-app",
+  "name": "store-system",
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
@@ -7,6 +7,7 @@
   },
   "dependencies": {
     "express": "^4.18.2",
+    "mongoose": "^8.0.0",
     "pdfkit": "^0.15.0"
   }
 }
