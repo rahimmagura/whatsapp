@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const mongoose = require('mongoose');
 const PDFDocument = require('pdfkit');
 
 const app = express();
@@ -7,94 +8,101 @@ const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+// MongoDB connect
+mongoose.connect(process.env.MONGO_URI)
+.then(()=>console.log("MongoDB connected"))
+.catch(err=>console.log(err));
+
+// Schema
+const DataSchema = new mongoose.Schema({
+  mobile: { type: String, unique: true },
+  email: { type: String, unique: true }
 });
 
-// database
-let dataStore = [];
+const Data = mongoose.model('Data', DataSchema);
 
-/*
-FORMAT:
-{
-  mobile: "",
-  email: ""
-}
-*/
+// UI
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
 
 // INSERT
-app.post('/insert', (req, res) => {
-    const { mobile, email } = req.body;
+app.post('/insert', async (req, res) => {
+  const { mobile, email } = req.body;
 
-    if (!mobile || !email) {
-        return res.json({ message: "Both fields required ❌" });
-    }
+  if (!mobile || !email) {
+    return res.json({ message: "Both required ❌" });
+  }
 
-    // duplicate check
-    let exists = dataStore.find(
-        item => item.mobile === mobile || item.email === email
-    );
+  let exists = await Data.findOne({
+    $or: [{ mobile }, { email }]
+  });
 
-    if (exists) {
-        return res.json({ message: "Already exists ❌" });
-    }
+  if (exists) {
+    return res.json({ message: "Already exists ❌" });
+  }
 
-    dataStore.push({ mobile, email });
+  await Data.create({ mobile, email });
 
-    res.json({ message: "Inserted successfully ✅" });
+  res.json({ message: "Inserted ✅" });
 });
+
 
 // CHECK
-app.post('/check', (req, res) => {
-    const { value } = req.body;
+app.post('/check', async (req, res) => {
+  const { value } = req.body;
 
-    let found = dataStore.find(
-        item => item.mobile === value || item.email === value
-    );
+  let found = await Data.findOne({
+    $or: [{ mobile: value }, { email: value }]
+  });
 
-    if (found) {
-        res.json({ found: true, data: found });
-    } else {
-        res.json({ found: false });
-    }
+  if (found) {
+    res.json({ found: true, data: found });
+  } else {
+    res.json({ found: false });
+  }
 });
+
 
 // DELETE
-app.post('/delete', (req, res) => {
-    const { value } = req.body;
+app.post('/delete', async (req, res) => {
+  const { value } = req.body;
 
-    let index = dataStore.findIndex(
-        item => item.mobile === value || item.email === value
-    );
+  let deleted = await Data.findOneAndDelete({
+    $or: [{ mobile: value }, { email: value }]
+  });
 
-    if (index !== -1) {
-        let deleted = dataStore.splice(index, 1);
-        return res.json({ deleted: deleted[0] });
-    }
-
+  if (deleted) {
+    res.json({ deleted });
+  } else {
     res.json({ message: "Not found ❌" });
+  }
 });
 
-// DOWNLOAD PDF
-app.get('/download', (req, res) => {
 
-    const doc = new PDFDocument();
+// PDF DOWNLOAD
+app.get('/download-pdf', async (req, res) => {
 
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'attachment; filename=data.pdf');
+  let data = await Data.find();
 
-    doc.pipe(res);
+  const doc = new PDFDocument();
 
-    doc.fontSize(20).text("Mobile Number & Email List", { align: "center" });
-    doc.moveDown();
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', 'attachment; filename=data.pdf');
 
-    dataStore.forEach((item, i) => {
-        doc.fontSize(12).text(`${i + 1}. Mobile: ${item.mobile} | Email: ${item.email}`);
-    });
+  doc.pipe(res);
 
-    doc.end();
+  doc.fontSize(18).text("Mobile & Email List", { align: "center" });
+  doc.moveDown();
+
+  data.forEach((d, i) => {
+    doc.text(`${i + 1}. Mobile: ${d.mobile} | Email: ${d.email}`);
+  });
+
+  doc.end();
 });
 
 app.listen(port, () => {
-    console.log("Server running on " + port);
+  console.log("Server running on " + port);
 });
