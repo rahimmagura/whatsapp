@@ -2,73 +2,54 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Store System</title>
 
 <style>
 body{
-  font-family: Arial;
+  margin:0;
+  font-family:Arial;
   background:#f4f4f4;
   display:flex;
   justify-content:center;
   align-items:center;
   height:100vh;
 }
-
 .box{
   width:95%;
   max-width:400px;
   background:white;
   padding:20px;
   border-radius:12px;
-  box-shadow:0 0 10px rgba(0,0,0,0.1);
 }
-
 input{
   width:100%;
   padding:10px;
   margin:5px 0;
-  box-sizing:border-box;
 }
-
 button{
   width:100%;
   padding:10px;
   margin-top:5px;
   border:none;
-  border-radius:6px;
   color:white;
-  font-size:15px;
-  cursor:pointer;
+  border-radius:6px;
 }
-
 .insert{background:green;}
 .check{background:blue;}
 .delete{background:red;}
 .download{background:black;}
 
-#result{
-  margin-top:10px;
-  font-weight:bold;
-  text-align:center;
+.spinner{
+  border:4px solid #eee;
+  border-top:4px solid blue;
+  border-radius:50%;
+  width:18px;
+  height:18px;
+  animation:spin 1s linear infinite;
+  display:none;
+  margin:10px auto;
 }
-
-/* 🔄 Spinner */
-.spinner {
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #3498db;
-  border-radius: 50%;
-  width: 18px;
-  height: 18px;
-  animation: spin 1s linear infinite;
-  display: none;
-  margin: 10px auto;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+@keyframes spin{100%{transform:rotate(360deg);}}
 </style>
 </head>
 
@@ -87,109 +68,67 @@ button{
 <button class="download" onclick="downloadPDF()">Download PDF</button>
 
 <div class="spinner" id="spinner"></div>
-
 <div id="result"></div>
 
 </div>
 
 <script>
-
-function showSpinner(){
-  document.getElementById("spinner").style.display = "block";
-}
-
-function hideSpinner(){
-  document.getElementById("spinner").style.display = "none";
-}
-
-function resetInputs(){
-  document.getElementById("mobile").value = "";
-  document.getElementById("email").value = "";
-}
+function show(){spinner.style.display="block";}
+function hide(){spinner.style.display="none";}
+function reset(){mobile.value="";email.value="";}
 
 // INSERT
 async function insertData(){
-
-  showSpinner();
-
-  let data = {
-    mobile: document.getElementById("mobile").value,
-    email: document.getElementById("email").value
-  };
-
+  show();
   let res = await fetch('/insert',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body: JSON.stringify(data)
+    body: JSON.stringify({mobile: mobile.value, email: email.value})
   });
-
   let out = await res.json();
-
-  hideSpinner();
-  document.getElementById("result").innerText = out.message;
-
-  resetInputs();
+  hide();
+  result.innerText = out.message;
+  reset();
 }
 
 // CHECK
 async function checkData(){
-
-  showSpinner();
-
-  let value = document.getElementById("mobile").value || document.getElementById("email").value;
-
+  show();
+  let value = mobile.value || email.value;
   let res = await fetch('/check',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify({value})
   });
-
   let out = await res.json();
-
-  hideSpinner();
-
-  if(out.found){
-    document.getElementById("result").innerText =
-    `Found ✅ Mobile: ${out.data.mobile} | Email: ${out.data.email}`;
-  } else {
-    document.getElementById("result").innerText = "Not Found ❌";
-  }
-
-  resetInputs();
+  hide();
+  result.innerText = out.found
+    ? `Found ✅ ${out.data.mobile} | ${out.data.email}`
+    : "Not Found ❌";
+  reset();
 }
 
 // DELETE
 async function deleteData(){
-
-  showSpinner();
-
-  let value = document.getElementById("mobile").value || document.getElementById("email").value;
-
+  show();
+  let value = mobile.value || email.value;
   let res = await fetch('/delete',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify({value})
   });
-
   let out = await res.json();
-
-  hideSpinner();
-
-  if(out.deleted){
-    document.getElementById("result").innerText =
-    `Deleted 🗑 Mobile: ${out.deleted.mobile} | Email: ${out.deleted.email}`;
-  } else {
-    document.getElementById("result").innerText = out.message;
-  }
-
-  resetInputs();
+  hide();
+  result.innerText = out.deleted
+    ? `Deleted 🗑 ${out.deleted.mobile} | ${out.deleted.email}`
+    : out.message;
+  reset();
 }
 
-// DOWNLOAD
+// PDF
 function downloadPDF(){
-  window.location.href = "/download";
+  window.location.href = "/download-pdf";
 }
-
 </script>
 
 </body>
